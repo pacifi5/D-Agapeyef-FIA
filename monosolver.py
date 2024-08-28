@@ -1,14 +1,47 @@
 import trigrammi
 import random
 import string 
+import utils as UC
 dizionario_valutazione = trigrammi.trigrams
-POPULATION_SIZE = 1200   # Mantiene la diversità con un costo computazionale ragionevole
+POPULATION_SIZE = 400   # Mantiene la diversità con un costo computazionale ragionevole
 GENOME_LENGTH = 26      # Fisso per il problema
-MUTATION_RATE = 0.4   # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-CROSSOVER_RATE = 0.8   # Combina efficacemente le soluzioni dei genitori
-GENERATIONS = 1000 
+MUTATION_RATE = 0.4  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
+CROSSOVER_RATE = 0.1   # Combina efficacemente le soluzioni dei genitori
+GENERATIONS = 2000 
 MAX = 0
 BEST_TEXT = 0
+
+
+
+def inject_init_population(ciphertext):
+    alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    mostCommons = ['e','t','a','o','i','n','s','h','r'] #ETAOINSHR
+    cipherMostCommons = UC.get_top9_chars(ciphertext)
+    cipherMostCommons = list(cipherMostCommons.lower())
+  
+      # Crea un dizionario per mappare i caratteri più comuni in inglese con quelli di cipherMostCommons
+    mapping = {}
+    used_chars = set()
+    
+    for mc, cmc in zip(mostCommons, cipherMostCommons):
+        if cmc not in used_chars:
+            mapping[mc] = cmc
+            used_chars.add(cmc)
+    
+    # Aggiungi le lettere rimanenti
+    remaining_letters = [char for char in alphabet if char not in used_chars]
+    
+    result = []
+    for char in alphabet:
+        if char in mapping:
+            result.append(mapping[char])
+        else:
+            # Usa la prossima lettera disponibile che non è già stata utilizzata
+            result.append(remaining_letters.pop(0))
+    
+    
+    return ''.join(result)
+     
 
 def convert(ciphertext, testkey):
     ciphertext = ciphertext.upper()
@@ -73,8 +106,11 @@ def mutate(genome):
 def decodifica(ciphertext: str):
     ciphertext = ciphertext.upper()
     ciphertext.replace(" ", "")
-    population = initial_population(POPULATION_SIZE)
-    #TODO: AGGIUNGI CHIAVI PROBABILI PER ANALISI FREQUENZE
+    population = initial_population(POPULATION_SIZE-100)
+    i = [inject_init_population(ciphertext)] * 100
+    for elem in i:
+        population.append(''.join(elem))
+
 
 
     for generation in range(GENERATIONS):
@@ -100,6 +136,11 @@ def decodifica(ciphertext: str):
 
 
 if __name__ == '__main__':
-    x,y = decodifica("ZqdawhqdkdsydllogdqolouwusdbifaiwuawsduadwsduzwaotzizqdtougxogdifzqdhtowuzdbzDugtwlqlhdordklaottzqwlduaknhzwiuokwlziakozwfzqdkdokdlhoadlikhozkwlziakozwfzqdkdokduilhoadlpdzvdduviksl".replace(" ",""))
 
+    #inject_init_population("ZqdawhqdkdsydllogdqolouwusdbifaiwuawsduadwsduzwaotzizqdtougxogdifzqdhtowuzdbzDugtwlqlhdordklaottzqwlduaknhzwiuokwlziakozwfzqdkdokdlhoadlikhozkwlziakozwfzqdkdokduilhoadlpdzvdduviksl")
+
+    x,y = decodifica("pdaoyrdtqdcyxpdmvfsvypzdsocstmwbzdszdttdmrwrorwxbzdxdorymdvfiqdtqdmotmocrbvrwtwvcwrzwldzjtvpdbzoyrwpzdvmcvtwavyctdstqvrdyboridzztqdcdhtxdtmwatvaozayzotdivyzspdtqdycwnydzdttdmoseoadcajavyc".replace(" ",""))
+
+    print(fitness('becausethenumberofdoubledandtripledlettersisasimplemeasureofwhetheratranspositionislikelytobeplausibleornoticountedthoseupaswellthenextmetrictocalculatewouldbetheuniqueletteradjacencycoun'))
+    print(MAX)
     print(BEST_TEXT)
