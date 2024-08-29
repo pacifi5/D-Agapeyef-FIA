@@ -2,21 +2,26 @@ import trigrammi
 import random
 import string 
 import utils as UC
+import commons
 dizionario_valutazione = trigrammi.trigrams
-POPULATION_SIZE = 400   # Mantiene la diversità con un costo computazionale ragionevole
+parole_comuni = commons.commons
+POPULATION_SIZE = 900   # Mantiene la diversità con un costo computazionale ragionevole
 GENOME_LENGTH = 26      # Fisso per il problema
-MUTATION_RATE = 0.4  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-CROSSOVER_RATE = 0.1   # Combina efficacemente le soluzioni dei genitori
-GENERATIONS = 2000 
+MUTATION_RATE = 0.3  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
+CROSSOVER_RATE = 0.5  # Combina efficacemente le soluzioni dei genitori
+GENERATIONS = 1200 
 MAX = 0
 BEST_TEXT = 0
 
 
 
+
+
+
 def inject_init_population(ciphertext):
     alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-    mostCommons = ['e','t','a','o','i','n','s','h','r'] #ETAOINSHR
-    cipherMostCommons = UC.get_top9_chars(ciphertext)
+    mostCommons = ['e','t','a','o','i','n','s','h','r','d','l','c','u','m','w','f','g','y','p','b','v','k','j','x','q','z'] 
+    cipherMostCommons = UC.all_piu_usati(ciphertext)
     cipherMostCommons = list(cipherMostCommons.lower())
   
       # Crea un dizionario per mappare i caratteri più comuni in inglese con quelli di cipherMostCommons
@@ -37,10 +42,9 @@ def inject_init_population(ciphertext):
             result.append(mapping[char])
         else:
             # Usa la prossima lettera disponibile che non è già stata utilizzata
-            result.append(remaining_letters.pop(0))
-    
-    
+            result.append(remaining_letters.pop(0))    
     return ''.join(result)
+     
      
 
 def convert(ciphertext, testkey):
@@ -51,10 +55,16 @@ def convert(ciphertext, testkey):
         ciphertext = ciphertext.replace(testkey[i], plain)
     return ciphertext.upper()
 
-def fitness(testo):
+
+
+#TODO randomizza restofalfabeth
+def fitness(testo:str):
     testo = testo.upper()
+    valutazione = 0.0
+    for elem in parole_comuni:
+        if elem in testo:
+            valutazione += elem.length()/200.0
     trigrams = [testo[i:i+3] for i in range(len(testo)-1)]
-    valutazione = 0
     global MAX
     global BEST_TEXT
     for tri in trigrams:
@@ -83,6 +93,7 @@ def select_parent(population, fitness_values):
 def crossover(parent1, parent2):
     if random.random() > CROSSOVER_RATE:
         return parent1, parent2
+    
 
     crossover_point = random.randint(1, GENOME_LENGTH - 2)
     child1 = list(parent1[:crossover_point])
@@ -112,11 +123,16 @@ def decodifica(ciphertext: str):
         population.append(''.join(elem))
 
 
-
+    gen = 0
     for generation in range(GENERATIONS):
+        gen += 1
         fitness_values = [fitness(convert(ciphertext, genome)) for genome in population]
         best_genome = population[fitness_values.index(max(fitness_values))]
-        new_population = [best_genome]
+        new_population = [best_genome] * 10
+        
+        if(gen % 100 == 0):
+            print(f"Best solution after {gen} generations:")
+            print(convert(ciphertext,best_genome))
 
         while len(new_population) < POPULATION_SIZE:
             parent1 = select_parent(population, fitness_values)
@@ -132,15 +148,13 @@ def decodifica(ciphertext: str):
     best_genome = population[fitness_values.index(max(fitness_values))]
     plaintext = convert(ciphertext, best_genome)
 
-    return plaintext, best_genome
+    return plaintext
 
 
 if __name__ == '__main__':
 
     #inject_init_population("ZqdawhqdkdsydllogdqolouwusdbifaiwuawsduadwsduzwaotzizqdtougxogdifzqdhtowuzdbzDugtwlqlhdordklaottzqwlduaknhzwiuokwlziakozwfzqdkdokdlhoadlikhozkwlziakozwfzqdkdokduilhoadlpdzvdduviksl")
 
-    x,y = decodifica("pdaoyrdtqdcyxpdmvfsvypzdsocstmwbzdszdttdmrwrorwxbzdxdorymdvfiqdtqdmotmocrbvrwtwvcwrzwldzjtvpdbzoyrwpzdvmcvtwavyctdstqvrdyboridzztqdcdhtxdtmwatvaozayzotdivyzspdtqdycwnydzdttdmoseoadcajavyc".replace(" ",""))
-
-    print(fitness('becausethenumberofdoubledandtripledlettersisasimplemeasureofwhetheratranspositionislikelytobeplausibleornoticountedthoseupaswellthenextmetrictocalculatewouldbetheuniqueletteradjacencycoun'))
-    print(MAX)
-    print(BEST_TEXT)
+    for _ in range(10):
+        x = decodifica("cdzgkiluceuixsonczkddcoiusaombukbcocmvkdzmdvbsfaoclcdiksdsdgkdcmdvxsoxoccaombukbkdzwsyobsfaoclcdiksdsxrokuucdcdzgkilrkggnsulkfaostcwsyotsbmnygmowmdvydvcoiumdvkdzsxzomffmomdvrsovsovcoulcuceuincgsrmocvcikzdcvuslcgawsyvctcgsarlkgczktkdzwsymdkdiumductmgymuksdsxwsyoaoszocii".replace(" ",""))
+        print(x)

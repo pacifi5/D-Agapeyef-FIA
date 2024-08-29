@@ -15,6 +15,22 @@ def get_top9_chars(testo):
     return caratteri_piu_usati
 
 
+def all_piu_usati(testo):
+    # Rimuovi gli spazi dal testo
+    testo_senza_spazi = testo.replace(" ", "")
+    
+    # Conta la frequenza di ogni carattere nel testo
+    contatore = Counter(testo_senza_spazi)
+    
+    # Ottieni i 9 caratteri più comuni
+    piu_comuni = contatore.most_common(26)
+    
+    # Estrai solo i caratteri, ignorando le frequenze
+    caratteri_piu_usati = ''.join([carattere for carattere, _ in piu_comuni])
+    
+    return caratteri_piu_usati
+
+
 # Funzione per ottenere i 5 bigrammi più comuni
 def get_top_5_bigrams(text:str):
     text=text.lower()
