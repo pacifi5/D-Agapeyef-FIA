@@ -1,7 +1,7 @@
 import trigrammi
 import random
 import string 
-import utils as UC
+import utili as UC
 import commons
 dizionario_valutazione = trigrammi.trigrams
 parole_comuni = commons.commons
