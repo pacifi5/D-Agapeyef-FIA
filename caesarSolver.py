@@ -49,9 +49,10 @@ def giveBestOfAll(listOfDecryptions):
     for elem in listOfDecryptions:
         if fitness(elem)>=fitness(max):
             max = elem
-    print(len(max)/fitness(max))
+    
     if(len(max)/fitness(max)>1600):
-        return monosolver.decodifica(max)
+        return -1
+    print("Tentativo di risoluzione con Cesare:")
     return max
 
 

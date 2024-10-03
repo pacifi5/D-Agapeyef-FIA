@@ -7,6 +7,7 @@ from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.preprocessing import LabelEncoder
 import monosolver as monosolver
 import caesarSolver as cesarsolver
+import TranspositionSolver as colsolver
 
 warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
@@ -45,25 +46,34 @@ try:
     probabilities = model.predict_proba(new_df)
     
     # Ordina le classi per probabilità decrescente e prendi le prime 3
-    top_3_indices = np.argsort(probabilities[0])[::-1][:3]
-    top_3_classes_encoded = model.classes_[top_3_indices]
-    top_3_probabilities = probabilities[0][top_3_indices]
+    top_4_indices = np.argsort(probabilities[0])[::-1][:4]
+    top_4_classes_encoded = model.classes_[top_4_indices]
+    top_4_probabilities = probabilities[0][top_4_indices]
 
     # Decodifica le classi predette usando il target encoder
-    top_3_classes = target_encoder.inverse_transform(top_3_classes_encoded)
+    top_4_classes = target_encoder.inverse_transform(top_4_classes_encoded)
 
     # Stampa le prime 3 classi con le loro probabilità
-    for i in range(3):
-        print(f"Classifica #{i + 1}: {top_3_classes[i]} con probabilità {top_3_probabilities[i]:.4f}")
+    for i in range(4):
+        print(f"Classifica #{i + 1}: {top_4_classes[i]} con probabilità {top_4_probabilities[i]:.4f}")
 except ValueError as e:
     print(f"Errore durante la predizione: {e}")
 
 
+if top_4_classes[0] == 'ceaser':
+    x=(cesarsolver.giveBestOfAll(cesarsolver.giveAllDecryptions(cifrario)))
+    if x==-1:
+        if top_4_classes[1] == 'ColumnarTransposition':
+            colsolver.decodifica(cifrario)
+        elif top_4_classes[1]=='MonoalphabeticSubstitution':
+            monosolver.decodifica(cifrario)
+        elif top_4_classes[1]=='Vigenere':
+            print("io vigenere ancora non lo so fare")
+    else:
+        print(x)
 
-if top_3_classes[0] == 'MonoalphabeticSubstitution':
-    monosolver.decodifica(cifrario)
-elif top_3_classes[0] == 'ceaser':
-    print(cesarsolver.giveBestOfAll(cesarsolver.giveAllDecryptions(cifrario)))
+
+
 
 
     

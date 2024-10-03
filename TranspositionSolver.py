@@ -13,8 +13,9 @@ parole_comuni = commons.commons
 
 
 POPULATION_SIZE = 900   # Mantiene la diversità con un costo computazionale ragionevole
-GENOME_LENGTH = 26      # Fisso per il problema
-MUTATION_RATE = 0.3  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
+MUTATION_RATE = 0.7  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
+MUTATION_RATE2 = 0.2  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
+
 CROSSOVER_RATE = 0.5  # Combina efficacemente le soluzioni dei genitori
 GENERATIONS = 1200 
 MAX = 0
@@ -72,11 +73,6 @@ def list_to_NDA(lista:list):
     return np.array(lista)
 
 
-
-
-
-
-
 def fitness(testo:str):
     testo = testo.upper()
     valutazione = 0.0
@@ -96,7 +92,7 @@ def fitness(testo:str):
 
 
 def random_genome():
-    length = random.randint(3,10)
+    length = random.randint(3,15)
     available_digits = list(range(length))
     random_list = random.sample(available_digits, length)
     return list_to_NDA(random_list)
@@ -112,11 +108,31 @@ def select_parent(population, fitness_values):
     return sorted_population[selected_index]
 
 
+def mutate_add_or_remove(genome):
+    genome = list(genome)
+    if random.random() > MUTATION_RATE2:
+        return list_to_NDA(genome)
+    
+    # Casualmente scegliere se aggiungere o rimuovere un elemento
+    if random.random() < 0.5:  # 50% di probabilità
+        # Rimuovere l'elemento più grande
+        if len(genome) > 3:
+            genome.remove(max(genome))
+    else:
+        # Aggiungere l'intero successivo al massimo già presente
+        max_value = max(genome)
+        next_value = max_value + 1
+        genome.append(next_value)
+    
+    return list_to_NDA(genome)
+
+
+
 #TODO: aggiustare la mutazione  
 def mutate(genome):
     genome = list(genome)
-    if random.random() < MUTATION_RATE + 2 * MAX:
-        idx1, idx2 = random.sample(range(GENOME_LENGTH), 2)
+    if random.random() < MUTATION_RATE:
+        idx1, idx2 = random.sample(range(len(genome)), 2)
         genome[idx1], genome[idx2] = genome[idx2], genome[idx1]
     return list_to_NDA(genome)
 
@@ -124,6 +140,7 @@ def mutate(genome):
 
 
 def decodifica(ciphertext: str):
+    print("Tentativo di decodifica Trasposizione Colonnare:\n")
     alphabet = b'abcdefghijklmnopqrstuvwxyz'  # Alfabeto in bytes
     unknown_symbol = b'?'
     unknown_symbol_number = 26  # Un numero fuori dall'intervallo dell'alfabeto
@@ -133,6 +150,7 @@ def decodifica(ciphertext: str):
     
     # Inizializza la popolazione
     population = initial_population(POPULATION_SIZE)
+
     
 
     # Generazioni dell'algoritmo genetico
@@ -152,8 +170,8 @@ def decodifica(ciphertext: str):
         best_genome = population[fitness_values.index(max(fitness_values))]
 
         # Seleziona una nuova popolazione basata sul fitness
-        new_population = [best_genome] * 10  # Mantieni i migliori individui
-
+        new_population = [best_genome] * round(generation / 100 * 10)  # Mantieni i migliori individui
+        
         # Log del miglior testo dopo ogni 100 generazioni
         if generation % 100 == 0:
             print(f"Miglior soluzione dopo {generation} generazioni:")
@@ -164,8 +182,8 @@ def decodifica(ciphertext: str):
         # Creazione della nuova generazione tramite selezione e mutazione
         while len(new_population) < POPULATION_SIZE:
             parent1 = select_parent(population, fitness_values)
-            parent2 = select_parent(population, fitness_values)
-            child = mutate(parent1)  # Puoi applicare anche il crossover se lo implementi
+            child = mutate(parent1) 
+            child = mutate_add_or_remove(child)
             new_population.append(child)
 
         # Aggiorna la popolazione
@@ -185,5 +203,5 @@ def decodifica(ciphertext: str):
 
 if __name__ == '__main__':
 
-    print(decodifica("FHTOCEEEWFAXETSLELDDALHTNEATSX"))
+    print(decodifica("IUENETEAHGPHEQITCDRNENNHCNFPCTROTUBETAOONHLTHEFQSLNOEGSFGFCISRAETTELXAEOESONIRYFHHAISTFTTHOEEHINYNAIOSNRNUWNAIIGEHSNBBIATFCOPTLHIIONTYRICRTLAHCMUETOOLIDWRNETAOAUTRIENEIXESSWTIXSDFCAEXLLEEOOUSIEEAATTEWTCMHSUTSHELCERNNTAAXISTUOEARAUAIERYBIMSDAHSIPTSATTNSOETTEATPTHAESTHEFTTMCASCNEDUNOTOSEISEIOLIIOPNQAHRSICETPX"))
 

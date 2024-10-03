@@ -178,6 +178,7 @@ def forcemutate(genome):
 
 
 def decodifica(ciphertext: str):
+    print("Tentativo di decodifica sostituzione monoalfabetica:\n")
     """
     Decifra il ciphertext utilizzando un algoritmo genetico.
     """
