@@ -1,139 +1,222 @@
 import trigrammi
 import random
-import string 
+import string
 import utili as UC
 import commons
+
+
+# Dati per la valutazione del fitness
 dizionario_valutazione = trigrammi.trigrams
 parole_comuni = commons.commons
-POPULATION_SIZE = 900   # Mantiene la diversità con un costo computazionale ragionevole
-GENOME_LENGTH = 26      # Fisso per il problema
-MUTATION_RATE = 0.3  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-CROSSOVER_RATE = 0.5  # Combina efficacemente le soluzioni dei genitori
-GENERATIONS = 1200 
-MAX = 0
-BEST_TEXT = 0
 
-
-
-
+# Parametri dell'algoritmo genetico
+POPULATION_SIZE = 1000  # Mantiene la diversità con un costo computazionale ragionevole
+GENOME_LENGTH = 26  # Fisso per il problema
+MUTATION_RATE = 0.6 # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
+CROSSOVER_RATE = 0.4  # Combina efficacemente le soluzioni dei genitori
+GENERATIONS = 2000
+MAX_FITNESS = 0
+BEST_TEXT = ""
 
 
 def inject_init_population(ciphertext):
-    alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-    mostCommons = ['e','t','a','o','i','n','s','h','r','d','l','c','u','m','w','f','g','y','p','b','v','k','j','x','q','z'] 
-    cipherMostCommons = UC.all_piu_usati(ciphertext)
-    cipherMostCommons = list(cipherMostCommons.lower())
-  
-      # Crea un dizionario per mappare i caratteri più comuni in inglese con quelli di cipherMostCommons
+    """
+    Crea una chiave iniziale mappando le lettere più comuni in inglese
+    alle lettere più comuni nel ciphertext.
+    """
+    alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+                'v', 'w', 'x', 'y', 'z']
+    most_commons = ['e', 't', 'a', 'o', 'i', 'n', 's', 'h', 'r', 'd', 'l', 'c', 'u', 'm', 'w', 'f', 'g', 'y', 'p', 'b',
+                    'v', 'k', 'j', 'x', 'q', 'z']
+    cipher_most_commons = list(UC.all_piu_usati(ciphertext).lower())
+
     mapping = {}
     used_chars = set()
-    
-    for mc, cmc in zip(mostCommons, cipherMostCommons):
+
+    # Mappa le lettere più comuni in inglese alle lettere più comuni nel ciphertext
+    for mc, cmc in zip(most_commons, cipher_most_commons):
         if cmc not in used_chars:
             mapping[mc] = cmc
             used_chars.add(cmc)
-    
-    # Aggiungi le lettere rimanenti
+
+    # Aggiungi le lettere rimanenti in modo casuale
     remaining_letters = [char for char in alphabet if char not in used_chars]
-    
-    result = []
+    random.shuffle(remaining_letters)
+
+    key = []
     for char in alphabet:
         if char in mapping:
-            result.append(mapping[char])
+            key.append(mapping[char])
         else:
-            # Usa la prossima lettera disponibile che non è già stata utilizzata
-            result.append(remaining_letters.pop(0))    
-    return ''.join(result)
-     
-     
+            key.append(remaining_letters.pop())
+
+    #print(''.join(key))
+    return ''.join(key)
+
 
 def convert(ciphertext, testkey):
+    """
+    Decodifica il ciphertext utilizzando la chiave fornita.
+    """
     ciphertext = ciphertext.upper()
     testkey = testkey.upper()
-    for i in range(len(testkey)):
-        plain = chr(i+65).lower()
-        ciphertext = ciphertext.replace(testkey[i], plain)
-    return ciphertext.upper()
+    plaintext = []
+
+    # Crea una mappa dalla chiave alla lettere in chiaro
+    translation_map = {testkey[i]: chr(65 + i) for i in range(GENOME_LENGTH)}
+
+    # Traduci il ciphertext utilizzando la mappa
+    for char in ciphertext:
+        if char in translation_map:
+            plaintext.append(translation_map[char].lower())
+        else:
+            plaintext.append(char)  # Mantiene caratteri non alfabetici invariati
+
+    return ''.join(plaintext).upper()
 
 
-
-#TODO randomizza restofalfabeth
-def fitness(testo:str):
+def fitness(testo: str):
+    """
+    Valuta il fitness del testo decifrato basandosi sulla frequenza dei trigrammi
+    e sulla presenza di parole comuni.
+    """
     testo = testo.upper()
     valutazione = 0.0
-    for elem in parole_comuni:
-        if elem in testo:
-            valutazione += elem.length()/200.0
-    trigrams = [testo[i:i+3] for i in range(len(testo)-1)]
-    global MAX
-    global BEST_TEXT
+
+    # Valutazione basata sulle parole comuni
+    for parola in parole_comuni:
+        if parola.upper() in testo:
+            valutazione += len(parola) / 200.0
+
+    # Valutazione basata sui trigrammi
+    trigrams = [testo[i:i + 3] for i in range(len(testo) - 2)]
+    global MAX_FITNESS, BEST_TEXT
     for tri in trigrams:
         if tri in dizionario_valutazione:
             valutazione += dizionario_valutazione[tri]
-        if valutazione >= MAX:
-            MAX = valutazione
+        if valutazione > MAX_FITNESS:
+            MAX_FITNESS = valutazione
             BEST_TEXT = testo
+
     return valutazione
 
+
 def random_genome():
+    """
+    Genera una chiave genetica casuale.
+    """
     alfabeto = list(string.ascii_lowercase)
     random.shuffle(alfabeto)
     return ''.join(alfabeto)
 
-def initial_population(populationSize):
-    return [random_genome() for _ in range(populationSize-100)]
+
+def initial_population(pop_size):
+    """
+    Crea una popolazione iniziale di chiavi genetiche.
+    """
+    return [random_genome() for _ in range(pop_size)]
+
 
 def select_parent(population, fitness_values):
-    paired_population = list(zip(population, fitness_values))
-    paired_population.sort(key=lambda x: x[1], reverse=True)
-    sorted_population = [genome for genome, _ in paired_population]
-    selected_index = random.choices(range(len(sorted_population)), weights=range(len(sorted_population), 0, -1), k=1)[0]
-    return sorted_population[selected_index]
+    """
+    Seleziona un genitore utilizzando la selezione per roulette basata sul fitness.
+    """
+    total_fitness = sum(fitness_values)
+    if total_fitness == 0:
+        return random.choice(population)
+    selection_probs = [f / total_fitness for f in fitness_values]
+    return random.choices(population, weights=selection_probs, k=1)[0]
+
 
 def crossover(parent1, parent2):
+    """
+    Esegue il crossover tra due genitori per generare due figli.
+    """
     if random.random() > CROSSOVER_RATE:
         return parent1, parent2
-    
 
     crossover_point = random.randint(1, GENOME_LENGTH - 2)
-    child1 = list(parent1[:crossover_point])
-    child2 = list(parent2[:crossover_point])
+    child1 = parent1[:crossover_point]
+    child2 = parent2[:crossover_point]
 
-    for gene in parent2:
-        if gene not in child1:
-            child1.append(gene)
-    for gene in parent1:
-        if gene not in child2:
-            child2.append(gene)
-    return ''.join(child1), ''.join(child2)
+    # Aggiungi le lettere rimanenti preservando l'unicità
+    def complete_child(child, parent):
+        for gene in parent:
+            if gene not in child:
+                child += gene
+                if len(child) == GENOME_LENGTH:
+                    break
+        return child
+
+    child1 = complete_child(child1, parent2)
+    child2 = complete_child(child2, parent1)
+
+    return child1, child2
+
 
 def mutate(genome):
-    genome = list(genome)
-    if random.random() < MUTATION_RATE + 2 * MAX:
+    """
+    Esegue la mutazione di un genoma scambiando due lettere con una certa probabilità.
+    """
+    if random.random() < MUTATION_RATE:
+        genome = list(genome)
         idx1, idx2 = random.sample(range(GENOME_LENGTH), 2)
         genome[idx1], genome[idx2] = genome[idx2], genome[idx1]
-    return ''.join(genome)
+        return ''.join(genome)
+    return genome
+
+def forcemutate(genome):
+    """
+    Esegue la mutazione di un genoma scambiando due lettere con una certa probabilità.
+    """
+    if True:
+        genome = list(genome)
+        idx1, idx2 = random.sample(range(GENOME_LENGTH), 2)
+        genome[idx1], genome[idx2] = genome[idx2], genome[idx1]
+        return ''.join(genome)
+    return genome
+
 
 def decodifica(ciphertext: str):
-    ciphertext = ciphertext.upper()
-    ciphertext.replace(" ", "")
-    population = initial_population(POPULATION_SIZE-100)
-    i = [inject_init_population(ciphertext)] * 100
-    for elem in i:
-        population.append(''.join(elem))
+    """
+    Decifra il ciphertext utilizzando un algoritmo genetico.
+    """
+    #ciphertext = ciphertext.upper().replace(" ", "")
 
+    # Inizializza la popolazione con soluzioni casuali e soluzioni basate su frequenza
+    population = initial_population(POPULATION_SIZE - 20)
 
-    gen = 0
-    for generation in range(GENERATIONS):
-        gen += 1
+    for _ in range(20):
+        population.append(inject_init_population(ciphertext))
+
+    global MAX_FITNESS, BEST_TEXT
+    MAX_FITNESS = 0
+    BEST_TEXT = ""
+
+    for gen in range(1, GENERATIONS + 1):
+        # Calcola i valori di fitness per la popolazione corrente
         fitness_values = [fitness(convert(ciphertext, genome)) for genome in population]
-        best_genome = population[fitness_values.index(max(fitness_values))]
-        new_population = [best_genome] * 10
-        
-        if(gen % 100 == 0):
-            print(f"Best solution after {gen} generations:")
-            print(convert(ciphertext,best_genome))
+        # Trova il genoma con il miglior fitness
+        max_fitness = max(fitness_values)
+        best_genome = population[fitness_values.index(max_fitness)]
+        best_plaintext = convert(ciphertext, best_genome)
 
+        if(gen == 1):
+            best_genome = inject_init_population(ciphertext)
+            best_plaintext = convert(ciphertext,best_genome)
+
+        # Stampa il miglior risultato ogni 100 generazioni
+        if gen % 100 == 0 or gen == 1:
+            print(f"Generazione {gen}: Fitness={max_fitness}")
+            print(best_plaintext)
+            print("-" * 50)
+
+        # Crea una nuova popolazione mantenendo i migliori individui
+        new_population = [forcemutate(best_genome)] * 30  # Elitismo: mantieni i migliori 10 individui
+        if(gen > 1000 ):
+            new_population.append(best_genome)
+
+        # Genera il resto della nuova popolazione tramite crossover e mutazione
         while len(new_population) < POPULATION_SIZE:
             parent1 = select_parent(population, fitness_values)
             parent2 = select_parent(population, fitness_values)
@@ -144,17 +227,12 @@ def decodifica(ciphertext: str):
 
         population = new_population[:POPULATION_SIZE]
 
+    # Dopo tutte le generazioni, trova la migliore soluzione
     fitness_values = [fitness(convert(ciphertext, genome)) for genome in population]
     best_genome = population[fitness_values.index(max(fitness_values))]
     plaintext = convert(ciphertext, best_genome)
 
+    print("Miglior soluzione finale:")
+    print(plaintext)
+
     return plaintext
-
-
-if __name__ == '__main__':
-
-    #inject_init_population("ZqdawhqdkdsydllogdqolouwusdbifaiwuawsduadwsduzwaotzizqdtougxogdifzqdhtowuzdbzDugtwlqlhdordklaottzqwlduaknhzwiuokwlziakozwfzqdkdokdlhoadlikhozkwlziakozwfzqdkdokduilhoadlpdzvdduviksl")
-
-    for _ in range(10):
-        x = decodifica("cdzgkiluceuixsonczkddcoiusaombukbcocmvkdzmdvbsfaoclcdiksdsdgkdcmdvxsoxoccaombukbkdzwsyobsfaoclcdiksdsxrokuucdcdzgkilrkggnsulkfaostcwsyotsbmnygmowmdvydvcoiumdvkdzsxzomffmomdvrsovsovcoulcuceuincgsrmocvcikzdcvuslcgawsyvctcgsarlkgczktkdzwsymdkdiumductmgymuksdsxwsyoaoszocii".replace(" ",""))
-        print(x)

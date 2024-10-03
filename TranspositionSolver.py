@@ -112,7 +112,7 @@ def select_parent(population, fitness_values):
     return sorted_population[selected_index]
 
 
-#TODO: aggiustare la mutazione 
+#TODO: aggiustare la mutazione  
 def mutate(genome):
     genome = list(genome)
     if random.random() < MUTATION_RATE + 2 * MAX:
