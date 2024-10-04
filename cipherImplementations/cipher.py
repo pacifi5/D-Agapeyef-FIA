@@ -5,7 +5,6 @@ import numpy as np
 from collections import OrderedDict
 sys.path.append("../../../")
 from util.utils import remove_unknown_symbols, map_text_into_numberspace
-from cipherTypeDetection.dictionary import USE_DICTIONARY, GENERATE_RANDOM_ALPHABETS, WORD_DICT, UNIQUE_WORD_DICT
 
 
 INPUT_ALPHABET = b'abcdefghijklmnopqrstuvwxyz'
