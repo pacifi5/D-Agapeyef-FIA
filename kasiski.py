@@ -87,11 +87,9 @@ class KasiskiTest:
         distances = self.find_distance_between_sequences()
         candidate_key_length = self.get_candidate_key_length(distances)
 
-        for number, freq in candidate_key_length:
-            print(f"Factor {number} appeared {freq} times")
 
         if len(candidate_key_length) >= 2:
-            print(f"The key length is most likely {candidate_key_length[0][0]}, {candidate_key_length[1][0]} or a product of that.")
+            print(f"The key length is most likely {candidate_key_length[0][0]}, {candidate_key_length[1][0]},{candidate_key_length[2][0]} or a product of that.")
         elif len(candidate_key_length) == 1:
             print(f"The key length is most likely {candidate_key_length[0][0]} or a product of that.")
         else:

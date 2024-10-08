@@ -7,21 +7,20 @@ import string
 import utili as UC
 import commons
 
-
 # Dati per la valutazione del fitness
 dizionario_valutazione = trigrammi.trigrams
 parole_comuni = commons.commons
 
 # Parametri dell'algoritmo genetico
-POPULATION_SIZE = 400  # Mantiene la diversità con un costo computazionale ragionevole
-GENOME_LENGTH = 26  # Fisso per il problema
-MUTATION_RATE = 0.6 # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-MUTATION_RATE2 = 0.2
-CROSSOVER_RATE = 0.4  # Combina efficacemente le soluzioni dei genitori
+POPULATION_SIZE = 3000  # Mantiene la diversità con un costo computazionale ragionevole
+MUTATION_RATE = 0.8  # Ridotto per evitare troppi cambiamenti casuali
+MUTATION_RATE2 = 0.3  # Ridotto per mantenere la stabilità della chiave
+CROSSOVER_RATE = 0.4  # Maggiore probabilità di crossover efficace
 GENERATIONS = 2000
+TOURNAMENT_SIZE = 5  # Dimensione del torneo per la selezione
+
 MAX_FITNESS = 0
 BEST_TEXT = ""
-
 
 def fitness(testo: str):
     """
@@ -77,22 +76,29 @@ def mutate(chiave):
     # Ritorna la nuova stringa mutata
     return ''.join(chiave)
 
-
-
 def mutate2(chiave):
     if random.random() < MUTATION_RATE2:
         chiave = list(chiave)
-        lettera_casuale = random.choice(string.ascii_lowercase)
-        chiave.append(lettera_casuale)
-        
-        return ''.join(chiave)
-    
+        if random.choice([True, False]):
+            lettera_casuale = random.choice(string.ascii_lowercase)
+            random_index = random.randint(0, len(chiave) - 1)
+            chiave.insert(random_index, lettera_casuale)
+            return ''.join(chiave)
+        else:
+            if len(chiave) > 3:
+                random_index = random.randint(0, len(chiave) - 1)
+                chiave.pop(random_index)
+            return ''.join(chiave)
+
     return chiave
 
-
 def crossover(genitore1, genitore2):
+    if random.random() > CROSSOVER_RATE:
+        # Con probabilità (1 - CROSSOVER_RATE) copia casuale di un genitore
+        return genitore1, genitore2
+
     # Scegli un punto di crossover casuale
-    punto_crossover = random.randint(1, len(genitore1) - 1)
+    punto_crossover = random.randint(1, min(len(genitore1), len(genitore2)) - 1)
     
     # Crea i figli mescolando i segmenti dei genitori
     figlio1 = genitore1[:punto_crossover] + genitore2[punto_crossover:]
@@ -100,17 +106,18 @@ def crossover(genitore1, genitore2):
     
     return figlio1, figlio2
 
-
 def initial_population(kasiskiTestList, POPULATION_SIZE):
     kasiskiTestList = kasiskiTestList[:3]
     templist = []
 
     # Modifica della lista kasiskiTestList con tuple raddoppiate
-    for N, M in kasiskiTestList:
-        templist.append((N * 2, M))
+    for N, M in kasiskiTestList[:2]:
+        templist.append((N * 2, int(M / 2)))
+    print((max(templist)))
 
     kasiskiTestList.extend(templist)  # Aggiungi le tuple raddoppiate
 
+    print(kasiskiTestList)
     popolazione = []
 
     while len(popolazione) < POPULATION_SIZE:
@@ -131,16 +138,13 @@ def initial_population(kasiskiTestList, POPULATION_SIZE):
     print(f"Dimensione popolazione finale: {len(popolazione)}")
     return popolazione
 
-
-def select_parent(population, fitness_values):
+def select_parent(population, fitness_values, tournament_size=TOURNAMENT_SIZE):
     """
-    Seleziona un genitore utilizzando la selezione per roulette basata sul fitness.
+    Seleziona un genitore utilizzando la selezione a torneo.
     """
-    total_fitness = sum(fitness_values)
-    if total_fitness == 0:
-        return random.choice(population)
-    selection_probs = [f / total_fitness for f in fitness_values]
-    return random.choices(population, weights=selection_probs, k=1)[0]
+    tournament = random.sample(list(zip(population, fitness_values)), tournament_size)
+    tournament = sorted(tournament, key=lambda x: x[1], reverse=True)
+    return tournament[0][0]
 
 def decodifica(ciphertext: str):
     print("Tentativo di decodifica Vigenere:\n")
@@ -148,43 +152,44 @@ def decodifica(ciphertext: str):
     Decifra il ciphertext utilizzando un algoritmo genetico.
     """
     ciphertext = ciphertext.lower()
-    population = initial_population(kasiski.KasiskiTest(ciphertext).attack(),POPULATION_SIZE)
+    ciphertext = ciphertext.replace(" ", "")
+    
+    population = initial_population(kasiski.KasiskiTest(ciphertext).attack(), POPULATION_SIZE)
 
     global MAX_FITNESS, BEST_TEXT
     MAX_FITNESS = 0
     BEST_TEXT = ""
-    vig = Vigenere("ABCDEFGHIJKLMNOPQRSTUVWXYZ".lower(), " ", " ")
+    vig = Vigenere("abcdefghijklmnopqrstuvwxyz", " ", "-")
 
     for gen in range(1, GENERATIONS + 1):
         # Calcola i valori di fitness per la popolazione corrente
         fitness_values = [fitness(vig.decrypt(ciphertext, genome)) for genome in population]
-        # Trova il genoma con il miglior fitness
-        max_fitness = max(fitness_values)
-        best_genome = population[fitness_values.index(max_fitness)]
-        best_plaintext = vig.decrypt(ciphertext, best_genome)
-
-        if(gen == 1):
-            best_plaintext = vig.decrypt(ciphertext,best_genome)
-
+        
+        # Ordina la popolazione in base al fitness
+        sorted_population = [genome for _, genome in sorted(zip(fitness_values, population), key=lambda x: x[0], reverse=True)]
+        sorted_fitness = sorted(fitness_values, reverse=True)
+        
         # Stampa il miglior risultato ogni 100 generazioni
         if gen % 100 == 0 or gen == 1:
-            print(f"Generazione {gen}: Fitness={max_fitness} Chiave={best_genome}")
+            best_genome = sorted_population[0]
+            best_fitness = sorted_fitness[0]
+            best_plaintext = vig.decrypt(ciphertext, best_genome)
+            print(f"Generazione {gen}: Fitness={best_fitness} Chiave={best_genome}")
             print(best_plaintext)
             print("-" * 50)
+        
+        new_population = [best_genome] * int(gen/10)  # elitismo
 
-        new_population = [best_genome] #elitismo       
-
-        # Genera il resto della nuova popolazione tramite crossover e mutazione
+        # Genera la nuova popolazione tramite crossover e mutazione
         while len(new_population) < POPULATION_SIZE:
-            parent1 = select_parent(population, fitness_values)
-            parent2 = select_parent(population, fitness_values)
+            parent1 = select_parent(sorted_population, sorted_fitness)
+            parent2 = select_parent(sorted_population, sorted_fitness)
             child1, child2 = crossover(parent1, parent2)
             child1 = mutate(child1)
-            child2 = mutate(child2)
-            child1 = mutate2(child1)
-            child2 = mutate(child2)
+            child2 = mutate2(child2)
             new_population.extend([child1, child2])
-
+    
+        # Assicurati che la popolazione non superi la dimensione massima
         population = new_population[:POPULATION_SIZE]
 
     # Dopo tutte le generazioni, trova la migliore soluzione
@@ -196,11 +201,6 @@ def decodifica(ciphertext: str):
     print(plaintext)
 
     return plaintext
-
-
-
-
-
 
 class Vigenere(Cipher):
     def __init__(self, alphabet, unknown_symbol=None, unknown_symbol_number=-1):
@@ -258,12 +258,6 @@ class Vigenere(Cipher):
 
         return ''.join(plaintext)
 
-
-
-
-
-
-
-
 if __name__ == '__main__':
-    decodifica("fntlvsnkekwwgoebrgoenruwuocrnczzcruibdvntatucbptseueasofnbqpjnraadlfrsuifpeaptotiajcpuecbmvieuhrtibnbfciigwioeagyiyywvopcoghvmvioihcpuevbcgsuydvzaadhnjvrfweodvntolxrnpqbrnnqwuidbuhfrghrtkotfeimojaeejvsvjrfdgouergybxhfvrlbpcyiyhkjvvntyulaalrttnngebrlhdxjoaosyulrcushrrsf".lower())
+    cif="mvt deci thzacpg ivx daorsg ogr ivxwg tkwtbw sgwv geokfdk tg ivx hlc usrcfs efhttglwdbtzh ogr vfhk pdtfi has vofs lol rtjxzddxr lwmv p hasbs ht xbwwkwwipzbhn"
+    decodifica(cif)

@@ -8,11 +8,12 @@ from sklearn.preprocessing import LabelEncoder
 import monosolver as monosolver
 import caesarSolver as cesarsolver
 import TranspositionSolver as colsolver
+import VigenereSolver as Vig
 
 warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
 # Carica il modello e i LabelEncoders
-loaded_data = joblib.load('Jupyter Notebooks/test_model_and_encoders.joblib')
+loaded_data = joblib.load('Jupyter Notebooks/NuovoModello.joblib')
 model = loaded_data['model']
 label_encoders = loaded_data['label_encoders']
 target_encoder = loaded_data['target_encoder']
@@ -68,9 +69,15 @@ if top_4_classes[0] == 'ceaser':
         elif top_4_classes[1]=='MonoalphabeticSubstitution':
             monosolver.decodifica(cifrario)
         elif top_4_classes[1]=='Vigenere':
-            print("io vigenere ancora non lo so fare")
+            Vig.decodifica(cifrario.lower())
     else:
         print(x)
+elif top_4_classes[0] == 'ColumnarTransposition':
+    colsolver.decodifica(cifrario)
+elif top_4_classes[0]=='MonoalphabeticSubstitution':
+    monosolver.decodifica(cifrario)
+elif top_4_classes[0]=='Vigenere':
+    Vig.decodifica(cifrario.lower())
 
 
 
