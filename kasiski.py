@@ -94,5 +94,6 @@ class KasiskiTest:
             print(f"The key length is most likely {candidate_key_length[0][0]} or a product of that.")
         else:
             print(f"No matching sequences found.")
+            return -1
 
         return candidate_key_length

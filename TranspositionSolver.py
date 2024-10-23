@@ -15,7 +15,6 @@ parole_comuni = commons.commons
 POPULATION_SIZE = 900   # Mantiene la diversità con un costo computazionale ragionevole
 MUTATION_RATE = 0.7  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
 MUTATION_RATE2 = 0.2  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-
 CROSSOVER_RATE = 0.5  # Combina efficacemente le soluzioni dei genitori
 GENERATIONS = 1200 
 MAX = 0
