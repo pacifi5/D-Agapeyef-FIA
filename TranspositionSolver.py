@@ -12,13 +12,14 @@ parole_comuni = commons.commons
 
 
 
-POPULATION_SIZE = 900   # Mantiene la diversità con un costo computazionale ragionevole
-MUTATION_RATE = 0.7  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-MUTATION_RATE2 = 0.2  # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-CROSSOVER_RATE = 0.5  # Combina efficacemente le soluzioni dei genitori
+POPULATION_SIZE = 900                      
+MUTATION_RATE = 0.7  
+MUTATION_RATE2 = 0.2  
+CROSSOVER_RATE = 0.5  
 GENERATIONS = 1200 
 MAX = 0
 BEST_TEXT = 0
+ogtx = ""
 
 
 
@@ -49,6 +50,7 @@ class ColumnarTransposition(Cipher):
                     continue
                 ciphertext.append(p)
                 position += len(key)
+        
         return np.array(ciphertext)
 
     def decrypt(self, ciphertext, key):
@@ -76,8 +78,8 @@ def fitness(testo:str):
     testo = testo.upper()
     valutazione = 0.0
     for elem in parole_comuni:
-        if elem in testo:
-            valutazione += elem.length()/200.0
+        if elem.upper() in testo:
+            valutazione += len(elem)/200.0
     trigrams = [testo[i:i+3] for i in range(len(testo)-1)]
     global MAX
     global BEST_TEXT
@@ -112,13 +114,13 @@ def mutate_add_or_remove(genome):
     if random.random() > MUTATION_RATE2:
         return list_to_NDA(genome)
     
-    # Casualmente scegliere se aggiungere o rimuovere un elemento
-    if random.random() < 0.5:  # 50% di probabilità
+  
+    if random.random() < 0.5:  
         # Rimuovere l'elemento più grande
         if len(genome) > 3:
             genome.remove(max(genome))
     else:
-        # Aggiungere l'intero successivo al massimo già presente
+        
         max_value = max(genome)
         next_value = max_value + 1
         genome.append(next_value)
@@ -140,15 +142,19 @@ def mutate(genome):
 
 def decodifica(ciphertext: str):
     print("Tentativo di decodifica Trasposizione Colonnare:\n")
-    alphabet = b'abcdefghijklmnopqrstuvwxyz'  # Alfabeto in bytes
+    alphabet = b'abcdefghijklmnopqrstuvwxyz'  
     unknown_symbol = b'?'
-    unknown_symbol_number = 26  # Un numero fuori dall'intervallo dell'alfabeto
+    unknown_symbol_number = 26  
     cipher = ColumnarTransposition(alphabet, unknown_symbol, unknown_symbol_number, fill_blocks=True)
     # Prepara il ciphertext, convertendolo in una lista di indici dell'alfabeto
+    global ogtx
+    ogtx = ciphertext
     ciphertext = [alphabet.index(bytes([ord(char)])) for char in ciphertext.lower() if char.encode() in alphabet]
+    
     
     # Inizializza la popolazione
     population = initial_population(POPULATION_SIZE)
+    
 
     
 
@@ -165,36 +171,134 @@ def decodifica(ciphertext: str):
             fitness_score = fitness(decrypted_text)
             fitness_values.append(fitness_score)
         
-        # Trova il genome migliore in base al fitness
+       
         best_genome = population[fitness_values.index(max(fitness_values))]
 
         # Seleziona una nuova popolazione basata sul fitness
         new_population = [best_genome] * round(generation / 100 * 10)  # Mantieni i migliori individui
         
-        # Log del miglior testo dopo ogni 100 generazioni
-        if generation % 100 == 0:
+    
+        if generation % 100 == 0 or generation == 0:
             print(f"Miglior soluzione dopo {generation} generazioni:")
             best_decrypted_indices = cipher.decrypt(ciphertext, best_genome)
             best_decrypted_text = ''.join(chr(alphabet[i]) for i in best_decrypted_indices)
-            print(best_decrypted_text)
+            if(fitness(best_decrypted_text) <= fitness(str(ogtx))):
+                 print(ogtx)
+                 print("con fitness:" + str(fitness(ogtx)))
+            else:
+                print(best_decrypted_text)
+                print("con fitness:" + str(fitness(best_decrypted_text)))
 
         # Creazione della nuova generazione tramite selezione e mutazione
         while len(new_population) < POPULATION_SIZE:
             parent1 = select_parent(population, fitness_values)
-            child = mutate(parent1) 
+            parent2 = select_parent(population, fitness_values)
+    
+            if random.random() < CROSSOVER_RATE:
+                child = crossover(parent1, parent2)
+            else:
+                child = mutate(parent1)
             child = mutate_add_or_remove(child)
+            
+
             new_population.append(child)
 
-        # Aggiorna la popolazione
+        
         population = new_population[:POPULATION_SIZE]
 
-    # Decodifica il testo usando il miglior genome trovato
+    
     final_best_genome = population[fitness_values.index(max(fitness_values))]
     final_decrypted_indices = cipher.decrypt(ciphertext, final_best_genome)
     final_plaintext = ''.join(chr(alphabet[i]) for i in final_decrypted_indices)
 
+    if(fitness(final_plaintext)< fitness(ogtx)):
+        return ogtx
     return final_plaintext
 
+
+
+def scodifica(ciphertext: str):
+    """funzione atta solo a testare il cifrario dagapeyeff"""
+    print("Tentativo di scodifica Trasposizione Colonnare:\n")
+    alphabet = b'abcdefghijklmnopqrstuvwxyz'  
+    unknown_symbol = b'?'
+    unknown_symbol_number = 26  
+    cipher = ColumnarTransposition(alphabet, unknown_symbol, unknown_symbol_number, fill_blocks=False)
+    ciphertext = ciphertext.lower()
+    global ogtx
+    ogtx = ciphertext
+    ciphertext = [alphabet.index(bytes([ord(char)])) for char in ciphertext.lower() if char.encode() in alphabet]
+    population = initial_population(POPULATION_SIZE)
+    for generation in range(GENERATIONS):
+        fitness_values = []
+        for genome in population:
+            decrypted_indices = cipher.encrypt(ciphertext, list_to_NDA(genome))
+            decrypted_text = ''.join(chr(alphabet[i]) for i in decrypted_indices)
+            fitness_score = fitness(decrypted_text)
+            fitness_values.append(fitness_score)
+        best_genome = population[fitness_values.index(max(fitness_values))]
+        new_population = [best_genome] * round(generation / 100 * 10)  
+        if generation % 100 == 0 or generation == 0:
+            print(f"Miglior soluzione dopo {generation} generazioni:")
+            best_decrypted_indices = cipher.encrypt(ciphertext, best_genome)
+            best_decrypted_text = ''.join(chr(alphabet[i]) for i in best_decrypted_indices)
+            if(fitness(best_decrypted_text) <= fitness(str(ogtx))):
+                 print(ogtx)
+                 print("con fitness:" + str(fitness(ogtx)))
+            else:
+                print(best_decrypted_text)
+                print("con fitness:" + str(fitness(best_decrypted_text)))
+        while len(new_population) < POPULATION_SIZE:
+            parent1 = select_parent(population, fitness_values)
+            parent2 = select_parent(population, fitness_values)
+            if random.random() < CROSSOVER_RATE:
+                child = crossover(parent1, parent2)
+            else:
+                child = mutate(parent1)
+            child = mutate_add_or_remove(child)
+            new_population.append(child)
+
+        population = new_population[:POPULATION_SIZE]
+    final_best_genome = population[fitness_values.index(max(fitness_values))]
+    final_decrypted_indices = cipher.encrypt(ciphertext, final_best_genome)
+    final_plaintext = ''.join(chr(alphabet[i]) for i in final_decrypted_indices)
+    if(fitness(final_plaintext)< fitness(ogtx)):
+        return ogtx
+    return final_plaintext
+
+
+
+def crossover(parent1, parent2):
+    """
+    Esegue il crossover tra due genitori garantendo che il figlio
+    sia una lista strettamente crescente di numeri unici.
+
+    :param parent1: Primo genitore (numpy array o lista strettamente crescente)
+    :param parent2: Secondo genitore (numpy array o lista strettamente crescente)
+    :return: Figlio risultante dal crossover (numpy array)
+    """
+    # Converte i genitori in set per ottenere unione e intersezione
+    set1, set2 = set(parent1), set(parent2)
+
+    # Prende l'intersezione come base per il figlio
+    common_elements = sorted(set1 & set2)
+
+    # Prende elementi unici da ciascun genitore per completare il figlio
+    unique_elements1 = sorted(set1 - set2)
+    unique_elements2 = sorted(set2 - set1)
+
+    # Combina in modo casuale per mantenere il risultato crescente
+    child = common_elements + unique_elements1[:len(unique_elements1)//2] + unique_elements2[:len(unique_elements2)//2]
+    child = sorted(child)
+
+    # Assicurati che il figlio abbia una lunghezza valida (almeno 3 elementi)
+    while len(child) < 3:
+        possible_values = set(range(max(child) + 1)) - set(child)
+        if possible_values:
+            child.append(min(possible_values))
+        child = sorted(child)
+
+    return list_to_NDA(child)
 
 
 
@@ -202,5 +306,4 @@ def decodifica(ciphertext: str):
 
 if __name__ == '__main__':
 
-    print(decodifica("IUENETEAHGPHEQITCDRNENNHCNFPCTROTUBETAOONHLTHEFQSLNOEGSFGFCISRAETTELXAEOESONIRYFHHAISTFTTHOEEHINYNAIOSNRNUWNAIIGEHSNBBIATFCOPTLHIIONTYRICRTLAHCMUETOOLIDWRNETAOAUTRIENEIXESSWTIXSDFCAEXLLEEOOUSIEEAATTEWTCMHSUTSHELCERNNTAAXISTUOEARAUAIERYBIMSDAHSIPTSATTNSOETTEATPTHAESTHEFTTMCASCNEDUNOTOSEISEIOLIIOPNQAHRSICETPX"))
-
+    print(fitness("TOOONAWTWONFBSEEUOVIBOAYETHEIAOFBUTNUNTENDONTHEEHWARFSTANNIOTHESDFIHTHENORWFDAHWSITHEATHEDAETIOSBWCATEODDIAFDIDSUATODOEDASUNGUIRISENWIFESISDNINONEATFSDBDSSHEOUTNFAFFUNDWNBWBEBDSBDDWGOFTSUUAEUHWIUA"))

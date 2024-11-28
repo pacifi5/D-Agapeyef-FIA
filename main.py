@@ -17,10 +17,16 @@ loaded_data = joblib.load('Jupyter Notebooks/NuovoModello.joblib')
 model = loaded_data['model']
 label_encoders = loaded_data['label_encoders']
 target_encoder = loaded_data['target_encoder']
+dag = False
 
 cifrario = input("Inserisci cifrario\n").lower()
-
+if cifrario == "dagapeyeff":
+    dag = True
+    #cifrario = "KBMPQBQDLDQIPODIIMONLCLLIIMBDKNMOQKIENKKKSCEELCLKPKKDBMRPICMKINLELOPDPDPPCMGBNBLLGLDCKMLDNCMPLCCCYILQQOCPOEDPEBTBBPQPQIQGKDEKFENBDILMOBMDQLSEBDOOQNPIQLEGINNPMNDBGBEBNKRGCMMGGNMPOKMLNGOBMNKLDKIPLBR"
+    cifrario = "CTWWHNAONSTSSPNLEFHFMYMDSNRRIOULCTHENELYHWUSLTTYHARYHIRDTAAOEUNDLLSEGFDLAEDDEAEOCOEHGENEEGOICRTOIPDSEEFIPITIYMTONCCTETAIAHMCTLLCOAEYMRNOGRRFUUSOIAMORRSNEPERNADRTAIOHTSTSTOSADLEUEHMEINGOEITUAEOIUUB"
+    #cifrario = "knktwhvanrmkfwinaonseevmemanxwlknaolftvxmofrwalmostawtherelgorswxafvwgoawsayemvergnagegnsoasodrrykorevsalgeroyaoanggodlowhweawegekfesntylegsktaswhkkidrgwnitevenrwesyymroydklhfyyvetenesitzgoeetoiol"
 # Crea un dizionario con le nuove caratteristiche
+
 new_data = {
     'Text': [cifrario],
     'IC': [Cipher.indice_di_coincidenza(cifrario)],
@@ -59,6 +65,30 @@ try:
         print(f"Classifica #{i + 1}: {top_4_classes[i]} con probabilità {top_4_probabilities[i]:.4f}")
 except ValueError as e:
     print(f"Errore durante la predizione: {e}")
+
+
+if dag:
+    print("bentornato signor Alexander")
+    best = [cifrario,monosolver.fitness(cifrario)]
+    while True:
+        cifrario = monosolver.decodifica(cifrario.lower())
+        if best[1]< monosolver.fitness(cifrario):
+            best[0] = cifrario
+            best[1] = monosolver.fitness(cifrario)
+        cifrario = colsolver.decodifica(cifrario.lower())
+        if best[1]< colsolver.fitness(cifrario):
+            best[0] = cifrario
+            best[1] = colsolver.fitness(cifrario)
+        cifrario = monosolver.decodifica(cifrario.lower())
+        if best[1]< monosolver.fitness(cifrario):
+            best[0] = cifrario
+            best[1] = monosolver.fitness(cifrario)
+
+        cifrario = colsolver.scodifica(cifrario.lower())
+        if best[1]< colsolver.fitness(cifrario.lower()):
+            best[0] = cifrario
+            best[1] = colsolver.fitness(cifrario.lower())
+        print(f"finito un ciclo di mono + column:\n Migliore Plaintext: {best[0]}\n con fitness {best[1]}")
 
 
 if top_4_classes[0] == 'ceaser':

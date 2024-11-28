@@ -9,12 +9,12 @@ import commons
 dizionario_valutazione = trigrammi.trigrams
 parole_comuni = commons.commons
 
-# Parametri dell'algoritmo genetico
-POPULATION_SIZE = 1000  # Mantiene la diversità con un costo computazionale ragionevole
-GENOME_LENGTH = 26  # Fisso per il problema
-MUTATION_RATE = 0.6 # Evita troppi cambiamenti casuali, mantenendo comunque la diversità
-CROSSOVER_RATE = 0.4  # Combina efficacemente le soluzioni dei genitori
-GENERATIONS = 2000
+
+POPULATION_SIZE = 800  
+GENOME_LENGTH = 26  
+MUTATION_RATE = 0.6 
+CROSSOVER_RATE = 0.4 
+GENERATIONS = 1200
 MAX_FITNESS = 0
 BEST_TEXT = ""
 
@@ -50,7 +50,7 @@ def inject_init_population(ciphertext):
         else:
             key.append(remaining_letters.pop())
 
-    #print(''.join(key))
+    
     return ''.join(key)
 
 
@@ -102,25 +102,19 @@ def fitness(testo: str):
 
 
 def random_genome():
-    """
-    Genera una chiave genetica casuale.
-    """
+    
     alfabeto = list(string.ascii_lowercase)
     random.shuffle(alfabeto)
     return ''.join(alfabeto)
 
 
 def initial_population(pop_size):
-    """
-    Crea una popolazione iniziale di chiavi genetiche.
-    """
+    
     return [random_genome() for _ in range(pop_size)]
 
 
 def select_parent(population, fitness_values):
-    """
-    Seleziona un genitore utilizzando la selezione per roulette basata sul fitness.
-    """
+   
     total_fitness = sum(fitness_values)
     if total_fitness == 0:
         return random.choice(population)
@@ -129,9 +123,7 @@ def select_parent(population, fitness_values):
 
 
 def crossover(parent1, parent2):
-    """
-    Esegue il crossover tra due genitori per generare due figli.
-    """
+ 
     if random.random() > CROSSOVER_RATE:
         return parent1, parent2
 
@@ -155,9 +147,7 @@ def crossover(parent1, parent2):
 
 
 def mutate(genome):
-    """
-    Esegue la mutazione di un genoma scambiando due lettere con una certa probabilità.
-    """
+    
     if random.random() < MUTATION_RATE:
         genome = list(genome)
         idx1, idx2 = random.sample(range(GENOME_LENGTH), 2)
@@ -166,9 +156,7 @@ def mutate(genome):
     return genome
 
 def forcemutate(genome):
-    """
-    Esegue la mutazione di un genoma scambiando due lettere con una certa probabilità.
-    """
+ 
     if True:
         genome = list(genome)
         idx1, idx2 = random.sample(range(GENOME_LENGTH), 2)
@@ -179,10 +167,7 @@ def forcemutate(genome):
 
 def decodifica(ciphertext: str):
     print("Tentativo di decodifica sostituzione monoalfabetica:\n")
-    """
-    Decifra il ciphertext utilizzando un algoritmo genetico.
-    """
-    #ciphertext = ciphertext.upper().replace(" ", "")
+   
 
     # Inizializza la popolazione con soluzioni casuali e soluzioni basate su frequenza
     population = initial_population(POPULATION_SIZE - 20)
@@ -197,7 +182,7 @@ def decodifica(ciphertext: str):
     for gen in range(1, GENERATIONS + 1):
         # Calcola i valori di fitness per la popolazione corrente
         fitness_values = [fitness(convert(ciphertext, genome)) for genome in population]
-        # Trova il genoma con il miglior fitness
+       
         max_fitness = max(fitness_values)
         best_genome = population[fitness_values.index(max_fitness)]
         best_plaintext = convert(ciphertext, best_genome)
@@ -206,14 +191,14 @@ def decodifica(ciphertext: str):
             best_genome = inject_init_population(ciphertext)
             best_plaintext = convert(ciphertext,best_genome)
 
-        # Stampa il miglior risultato ogni 100 generazioni
+       
         if gen % 100 == 0 or gen == 1:
             print(f"Generazione {gen}: Fitness={max_fitness}")
             print(best_plaintext)
             print("-" * 50)
 
-        # Crea una nuova popolazione mantenendo i migliori individui
-        new_population = [forcemutate(best_genome)] * 30  # Elitismo: mantieni i migliori 10 individui
+        
+        new_population = [best_genome] * 5  
         if(gen > 1000 ):
             new_population.append(best_genome)
 
@@ -233,7 +218,12 @@ def decodifica(ciphertext: str):
     best_genome = population[fitness_values.index(max(fitness_values))]
     plaintext = convert(ciphertext, best_genome)
 
-    print("Miglior soluzione finale:")
+    print(f"Miglior soluzione finale con valutazione{fitness(plaintext)}")
     print(plaintext)
 
     return plaintext
+
+
+
+if __name__ == '__main__':
+    print(fitness("TOOONAWTWONFBSEEUOVIBOAYETHEIAOFBUTNUNTENDONTHEEHWARFSTANNIOTHESDFIHTHENORWFDAHWSITHEATHEDAETIOSBWCATEODDIAFDIDSUATODOEDASUNGUIRISENWIFESISDNINONEATFSDBDSSHEOUTNFAFFUNDWNBWBEBDSBDDWGOFTSUUAEUHWIUA"))

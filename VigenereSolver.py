@@ -12,7 +12,7 @@ dizionario_valutazione = trigrammi.trigrams
 parole_comuni = commons.commons
 
 # Parametri dell'algoritmo genetico
-POPULATION_SIZE = 3000  # Mantiene la diversità con un costo computazionale ragionevole
+POPULATION_SIZE = 800  # Mantiene la diversità con un costo computazionale ragionevole
 MUTATION_RATE = 0.8  # Ridotto per evitare troppi cambiamenti casuali
 MUTATION_RATE2 = 0.3  # Ridotto per mantenere la stabilità della chiave
 CROSSOVER_RATE = 0.4  # Maggiore probabilità di crossover efficace

@@ -63,5 +63,5 @@ def indice_di_coincidenza(testo):
 
 
 if __name__ == '__main__':
-    x = get_top_5_bigrams("L IHHO OLNH WKLV ZRUNV EHVW RQ VKRUW PHVVDJHV RU PDBEH WKRVH ZLWK DYHUDJH OHQJWKI")
+    x = indice_di_coincidenza("EYLEUNIBSHEORYXILOOYREELSOWCSOTLUVOEMSETSHUEU")
     print(x)
