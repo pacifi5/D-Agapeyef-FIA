@@ -5,15 +5,14 @@ import utili as UC
 import commons
 
 
-# Dati per la valutazione del fitness
 dizionario_valutazione = trigrammi.trigrams
 parole_comuni = commons.commons
 
 
 POPULATION_SIZE = 800  
 GENOME_LENGTH = 26  
-MUTATION_RATE = 0.6 
-CROSSOVER_RATE = 0.4 
+MUTATION_RATE = 0.7
+CROSSOVER_RATE = 0.5 
 GENERATIONS = 1200
 MAX_FITNESS = 0
 BEST_TEXT = ""
@@ -24,9 +23,11 @@ def inject_init_population(ciphertext):
     Crea una chiave iniziale mappando le lettere più comuni in inglese
     alle lettere più comuni nel ciphertext.
     """
-    alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
-                'v', 'w', 'x', 'y', 'z']
-    most_commons = ['e', 't', 'a', 'o', 'i', 'n', 's', 'h', 'r', 'd', 'l', 'c', 'u', 'm', 'w', 'f', 'g', 'y', 'p', 'b',
+    alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 
+                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+                'u','v', 'w', 'x', 'y', 'z']
+    most_commons = ['e', 't', 'a', 'o', 'i', 'n', 's', 'h', 'r', 
+                    'd', 'l', 'c', 'u', 'm', 'w', 'f', 'g', 'y', 'p', 'b',
                     'v', 'k', 'j', 'x', 'q', 'z']
     cipher_most_commons = list(UC.all_piu_usati(ciphertext).lower())
 
@@ -39,7 +40,7 @@ def inject_init_population(ciphertext):
             mapping[mc] = cmc
             used_chars.add(cmc)
 
-    # Aggiungi le lettere rimanenti in modo casuale
+    # Aggiunge le lettere rimanenti in modo casuale
     remaining_letters = [char for char in alphabet if char not in used_chars]
     random.shuffle(remaining_letters)
 
@@ -62,15 +63,15 @@ def convert(ciphertext, testkey):
     testkey = testkey.upper()
     plaintext = []
 
-    # Crea una mappa dalla chiave alla lettere in chiaro
+    
     translation_map = {testkey[i]: chr(65 + i) for i in range(GENOME_LENGTH)}
 
-    # Traduci il ciphertext utilizzando la mappa
+    
     for char in ciphertext:
         if char in translation_map:
             plaintext.append(translation_map[char].lower())
         else:
-            plaintext.append(char)  # Mantiene caratteri non alfabetici invariati
+            plaintext.append(char)  
 
     return ''.join(plaintext).upper()
 
@@ -83,12 +84,10 @@ def fitness(testo: str):
     testo = testo.upper()
     valutazione = 0.0
 
-    # Valutazione basata sulle parole comuni
     for parola in parole_comuni:
         if parola.upper() in testo:
             valutazione += len(parola) / 200.0
 
-    # Valutazione basata sui trigrammi
     trigrams = [testo[i:i + 3] for i in range(len(testo) - 2)]
     global MAX_FITNESS, BEST_TEXT
     for tri in trigrams:
@@ -131,7 +130,7 @@ def crossover(parent1, parent2):
     child1 = parent1[:crossover_point]
     child2 = parent2[:crossover_point]
 
-    # Aggiungi le lettere rimanenti preservando l'unicità
+    # Aggiunge le lettere rimanenti preservando l'unicità
     def complete_child(child, parent):
         for gene in parent:
             if gene not in child:
@@ -169,10 +168,9 @@ def decodifica(ciphertext: str):
     print("Tentativo di decodifica sostituzione monoalfabetica:\n")
    
 
-    # Inizializza la popolazione con soluzioni casuali e soluzioni basate su frequenza
-    population = initial_population(POPULATION_SIZE - 20)
+    population = initial_population(POPULATION_SIZE - 100)
 
-    for _ in range(20):
+    for _ in range(100):
         population.append(inject_init_population(ciphertext))
 
     global MAX_FITNESS, BEST_TEXT
@@ -180,7 +178,6 @@ def decodifica(ciphertext: str):
     BEST_TEXT = ""
 
     for gen in range(1, GENERATIONS + 1):
-        # Calcola i valori di fitness per la popolazione corrente
         fitness_values = [fitness(convert(ciphertext, genome)) for genome in population]
        
         max_fitness = max(fitness_values)
@@ -202,7 +199,6 @@ def decodifica(ciphertext: str):
         if(gen > 1000 ):
             new_population.append(best_genome)
 
-        # Genera il resto della nuova popolazione tramite crossover e mutazione
         while len(new_population) < POPULATION_SIZE:
             parent1 = select_parent(population, fitness_values)
             parent2 = select_parent(population, fitness_values)

@@ -89,11 +89,11 @@ class KasiskiTest:
 
 
         if len(candidate_key_length) > 2:
-            print(f"The key length is most likely {candidate_key_length[0][0]}, {candidate_key_length[1][0]},{candidate_key_length[2][0]} or a product of that.")
+            print(f"La lunghezza della chiave e' {candidate_key_length[0][0]}, {candidate_key_length[1][0]},{candidate_key_length[2][0]} o un loro prodotto.")
         elif len(candidate_key_length) == 1:
-            print(f"The key length is most likely {candidate_key_length[0][0]} or a product of that.")
+            print(f"La lunghezza della chiave e' {candidate_key_length[0][0]} o un loro prodotto.")
         else:
-            print(f"No matching sequences found.")
+            print(f"Nessun pattern trovato nel test di Kasiski")
             return -1
 
         return candidate_key_length
