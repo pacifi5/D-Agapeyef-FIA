@@ -21,3 +21,8 @@ Il software è progettato per:
 - **Algoritmi Genetici**: Per la decodifica del testo cifrato, con diverse strategie per mutazione, selezione e crossover.
 - **Tecniche di analisi crittografica**: Per migliorare la robustezza del riconoscimento del cifrario.
 
+### Prerequisiti
+Sono necessari **Python 3.8+** e i seguenti pacchetti:
+```sh
+pip install numpy pandas scikit-learn matplotlib joblib
+```
